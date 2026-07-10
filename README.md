@@ -28,7 +28,7 @@
      "mcpServers": {
        "greenline": {
          "command": "npx",
-         "args": ["-y", "greenline-mcp-server"],
+         "args": ["-y", "greenline-works-mcp-server"],
          "env": {
            "GREENLINE_API_KEY": "accessId:apiKey"
          }
@@ -46,7 +46,7 @@
 ```bash
 claude mcp add greenline \
   -e GREENLINE_API_KEY=accessId:apiKey \
-  -- npx -y greenline-mcp-server
+  -- npx -y greenline-works-mcp-server
 ```
 
 ## Configuration
@@ -92,7 +92,7 @@ Plain JavaScript — no compile step.
 
 **`401` on every tool call.** API key is wrong or expired. Regenerate it.
 
-**Tools don't appear in the client.** Confirm the path is correct and the client was restarted after editing config. For `npx` installs, run `npx -y greenline-mcp-server` once manually to make sure it downloads cleanly.
+**Tools don't appear in the client.** Confirm the path is correct and the client was restarted after editing config. For `npx` installs, run `npx -y greenline-works-mcp-server` once manually to make sure it downloads cleanly.
 
 **`Card does not exist` on a card you can see.** It's a mirror — pass `board=<publicId>` to disambiguate which mirror.
 
