@@ -1,6 +1,6 @@
 {
     "name": "greenline-works-mcp-server",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Model Context Protocol server for the GreenLine public API",
     "license": "MIT",
     "homepage": "https://docs.greenline.works/mcp",
