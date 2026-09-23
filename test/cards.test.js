@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { renderCardLine, summarizeListResponse } = require('../src/tools/cards');
+const { renderCardLine, summarizeListResponse, renderHistoryLine } = require('../src/tools/cards');
 
 // --- renderCardLine: list_cards nests fields under CardItem; search_cards returns them flat.
 // The shared renderer must handle both, or list titles render as `undefined` (the reported bug).
@@ -56,4 +56,28 @@ test('summarizeListResponse also honors search-style total/has_more names', () =
     const { total, hasMore } = summarizeListResponse(data, 1, 20);
     assert.equal(total, 50);
     assert.equal(hasMore, true);
+});
+
+// --- renderHistoryLine: /cards/:id/history names events as `type` (entity.verb) plus the changed
+// `field`; `action`/`subAction` are deprecated and only worth showing when a backend sends nothing else.
+
+test('renderHistoryLine names the event type and the changed field', () => {
+    const line = renderHistoryLine({
+        createdAt: '2026-09-09T10:00:00.000Z',
+        type: 'card.updated',
+        field: 'title',
+        action: 'edited',
+        subAction: 'title',
+    });
+    assert.equal(line, '- 2026-09-09T10:00:00.000Z — card.updated (title)');
+});
+
+test('renderHistoryLine renders an event that has no field', () => {
+    const line = renderHistoryLine({ createdAt: '2026-09-09T10:00:00.000Z', type: 'card.moved', field: null });
+    assert.equal(line, '- 2026-09-09T10:00:00.000Z — card.moved');
+});
+
+test('renderHistoryLine falls back to the deprecated action when a backend sends no type', () => {
+    const line = renderHistoryLine({ createdAt: '2026-09-09T10:00:00.000Z', action: 'added', subAction: 'comment' });
+    assert.equal(line, '- 2026-09-09T10:00:00.000Z — added');
 });

@@ -18,6 +18,13 @@ const renderCardLine = card => {
     return `- ${number}**${c.title}** (\`${id}\`)${owner}`;
 };
 
+// History events are `type` (entity.verb) plus the changed `field`; `action` is the deprecated pair
+// still sent by older backends.
+const renderHistoryLine = ev => {
+    const what = ev.type ? `${ev.type}${ev.field ? ` (${ev.field})` : ''}` : ev.action;
+    return `- ${ev.createdAt || ev.date || '?'} — ${what}`;
+};
+
 // The /cards list envelope is { count, totalAvailable, cards, hasMore }; tolerate a bare
 // array or search-style { total, has_more } names too, so pagination metadata stays accurate.
 const summarizeListResponse = (data, page, count) => {
@@ -324,6 +331,7 @@ const registerCardsTools = server => {
             title: 'Get card history',
             description: [
                 'Fetch the activity history for a card (column moves, edits, comments, etc.) starting from a date.',
+                'Each event has a type (entity.verb, e.g. card.moved, comment.added) and, for updates, the changed field.',
                 '',
                 'Args:',
                 '  - id (string, required): card ObjectId.',
@@ -356,7 +364,7 @@ const registerCardsTools = server => {
                     [
                         `# History (${list.length} events since ${start})`,
                         '',
-                        ...list.map(ev => `- ${ev.createdAt || ev.date || '?'} — ${ev.action || ev.type}`),
+                        ...list.map(renderHistoryLine),
                     ].join('\n');
                 const { text } = truncateIfNeeded({ items: events, rendered: rerender(events), rerender });
                 return { content: [{ type: 'text', text }], structuredContent: { events } };
@@ -475,4 +483,4 @@ const registerCardsTools = server => {
     );
 };
 
-module.exports = { registerCardsTools, renderCardLine, summarizeListResponse };
+module.exports = { registerCardsTools, renderCardLine, renderHistoryLine, summarizeListResponse };
