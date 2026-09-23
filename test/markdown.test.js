@@ -77,3 +77,62 @@ test('create_checklist converts markdown in every task description', async t => 
     assert.equal(sent.tasks[0].description, '<p>first with <code>code</code></p>');
     assert.equal(sent.tasks[1].description, '<p>second with <strong>bold</strong></p>');
 });
+
+// Everything below is a format the editor stores and the app renders. The server reads each of
+// these back into the same delta the editor itself would produce, so what an LLM writes is what
+// the card ends up showing.
+test('keeps the levels of a nested list', () => {
+    assert.equal(
+        markdownToHtml('- parent\n  - child\n    - grandchild'),
+        '<ul><li>parent</li><li class="ql-indent-1">child</li><li class="ql-indent-2">grandchild</li></ul>'
+    );
+});
+
+test('reads a numbered list nested under a bullet', () => {
+    assert.equal(
+        markdownToHtml('- parent\n  1. first'),
+        '<ul><li>parent</li></ul><ol><li class="ql-indent-1">first</li></ol>'
+    );
+});
+
+test('renders a task list as a checklist', () => {
+    assert.equal(
+        markdownToHtml('- [ ] to do\n- [x] done'),
+        '<ul><li data-checked="false">to do</li><li data-checked="true">done</li></ul>'
+    );
+});
+
+test('keeps a fence language', () => {
+    assert.equal(
+        markdownToHtml('```javascript\nconst a = 1;\n```'),
+        '<pre data-language="javascript">const a = 1;</pre>'
+    );
+});
+
+test('renders an image as an image, not a link', () => {
+    assert.equal(
+        markdownToHtml('![a diagram](https://example.com/x.png)'),
+        '<p><img src="https://example.com/x.png" alt="a diagram"/></p>'
+    );
+});
+
+test('renders headings below level three', () => {
+    assert.equal(markdownToHtml('#### Deep'), '<h4>Deep</h4>');
+    assert.equal(markdownToHtml('####### Not a heading'), '<p>####### Not a heading</p>');
+});
+
+test('links a bare address, and leaves the ones already linked alone', () => {
+    assert.equal(
+        markdownToHtml('see https://example.com/docs for more'),
+        '<p>see <a href="https://example.com/docs">https://example.com/docs</a> for more</p>'
+    );
+    assert.equal(
+        markdownToHtml('[docs](https://example.com/docs)'),
+        '<p><a href="https://example.com/docs">docs</a></p>'
+    );
+    assert.equal(markdownToHtml('run `curl https://example.com`'), '<p>run <code>curl https://example.com</code></p>');
+});
+
+test('quotes a nested quote once, the only kind of quote there is', () => {
+    assert.equal(markdownToHtml('> > inner'), '<blockquote>inner</blockquote>');
+});
