@@ -2,7 +2,7 @@
 
 [Model Context Protocol](https://modelcontextprotocol.io/) server that lets AI assistants (Claude Desktop, Claude Code, Cursor, VS Code, Windsurf, and any MCP client) drive your [GreenLine](https://greenline.legal) workspace via the public API.
 
-27 tools across boards, cards, comments, checklists, tasks, and labels. No delete operations.
+33 tools across boards, cards, comments, links, attachments, checklists, tasks, and labels. The only delete is unlinking two cards.
 
 **Two ways to connect.** The **hosted server** at `https://mcp.greenline.works/mcp` is the recommended option for every client, Claude Desktop included — paste the URL, sign in with your GreenLine account, done. Nothing to install, no API key to manage, and you always get the current tool set. The **local install** (this npm package) runs the same server on your own machine over stdio — for stdio-only clients, unattended setups like CI where a browser sign-in isn't possible, restricted networks, or developing against a fork.
 
@@ -13,6 +13,8 @@
 - Inspect a card's history and time-in-column metrics.
 - Create, get, and update labels.
 - Add comments.
+- Link cards as parent and child or predecessor and successor, change a link's type, and unlink them.
+- List a card's attachments and get a download link for one.
 - Create, update, and list checklists — including bulk task creation in a single call.
 - Create, update, and move tasks.
 
@@ -78,7 +80,7 @@ The server validates the key on startup. A missing or malformed value (no `:` se
 
 ## Tools
 
-27 tools, all prefixed with `greenline_`:
+33 tools, all prefixed with `greenline_`:
 
 | Group | Tools |
 | --- | --- |
@@ -86,6 +88,8 @@ The server validates the key on startup. A missing or malformed value (no `:` se
 | **Boards** | `list_boards`, `get_board`, `list_board_columns`, `list_board_labels`, `list_board_members`, `list_board_custom_fields` |
 | **Cards** | `create_card`, `list_cards`, `get_card`, `update_card`, `move_card`, `get_card_history`, `get_card_metrics`, `search_cards` |
 | **Comments** | `create_comment`, `list_card_comments` |
+| **Links** | `list_card_links`, `create_card_link`, `update_card_link`, `delete_card_link` |
+| **Attachments** | `list_card_attachments`, `get_card_attachment` |
 | **Checklists** | `create_checklist`, `update_checklist`, `list_card_checklists` |
 | **Tasks** | `create_task`, `update_task`, `move_task` |
 | **Labels** | `create_label`, `get_label`, `update_label` |

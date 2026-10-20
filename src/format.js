@@ -20,6 +20,9 @@ const RICH_TEXT_HELP =
 
 const toJsonString = value => JSON.stringify(value, null, 2);
 
+// A card number reads as "#302", an ObjectId as itself.
+const cardLabel = ref => (/^\d+$/.test(ref) ? `#${ref}` : ref);
+
 // Caller passes the full rendered string and a `rerender(items)` callback so we can
 // shrink the items array and re-render until we're under CHARACTER_LIMIT.
 const truncateIfNeeded = ({ items, rendered, rerender }) => {
@@ -45,5 +48,6 @@ module.exports = {
     ResponseFormat,
     responseFormatField,
     toJsonString,
+    cardLabel,
     truncateIfNeeded,
 };

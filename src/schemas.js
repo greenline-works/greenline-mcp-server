@@ -20,10 +20,25 @@ const isoDateField = z.string().refine(value => !Number.isNaN(Date.parse(value))
     message: 'Must be an ISO-8601 date or datetime string',
 });
 
+// The link and attachment endpoints name a card by its number as well as its ObjectId.
+const CARD_REF_HELP = 'card number (e.g. 302) or card ObjectId';
+
+const cardRefField = z
+    .union([
+        z.number().int().min(1),
+        z.string().regex(/^#?(\d+|[a-f0-9]{24})$/i, 'Must be a card number (e.g. 302) or a 24-character ObjectId'),
+    ])
+    .describe(`The ${CARD_REF_HELP}.`);
+
+const cardRef = value => String(value).replace(/^#/, '');
+
 module.exports = {
     objectIdField,
     boardPublicIdField,
     pageField,
     countField,
     isoDateField,
+    CARD_REF_HELP,
+    cardRefField,
+    cardRef,
 };
