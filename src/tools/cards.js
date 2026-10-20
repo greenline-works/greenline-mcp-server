@@ -2,7 +2,16 @@ const { z } = require('zod');
 const { makeApiRequest, safeRun } = require('../client');
 const { responseFormatField, ResponseFormat, toJsonString, truncateIfNeeded, RICH_TEXT_HELP } = require('../format');
 const { richTextBody } = require('../markdown');
-const { objectIdField, boardPublicIdField, pageField, countField, isoDateField } = require('../schemas');
+const {
+    objectIdField,
+    boardPublicIdField,
+    pageField,
+    countField,
+    isoDateField,
+    CARD_REF_HELP,
+    cardLocatorField,
+    resolveCardLocator,
+} = require('../schemas');
 
 const READ = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true };
 const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
@@ -16,6 +25,14 @@ const renderCardLine = card => {
     const ownerEmail = c.owner && typeof c.owner === 'object' ? c.owner.email : c.owner;
     const owner = ownerEmail ? ` — owner ${ownerEmail}` : '';
     return `- ${number}**${c.title}** (\`${id}\`)${owner}`;
+};
+
+// GET /cards/{id} nests the card under CardItem.
+const renderCard = data => {
+    const c = data.CardItem || data;
+    const number = c.number !== undefined ? `#${c.number} ` : '';
+    const description = c.description ? `\n- **description**: ${c.description}` : '';
+    return `# ${number}${c.title}\n- **id**: ${data._id}${description}`;
 };
 
 // History events are `type` (entity.verb) plus the changed `field`; `action` is the deprecated pair
@@ -113,7 +130,7 @@ const registerCardsTools = server => {
                 '  - columns (string, optional): comma-separated column ObjectIds to restrict to.',
                 '  - owner (string, optional): account ObjectId or email — only cards owned by this person.',
                 '  - label (string, optional): label ObjectId or description string.',
-                '  - days_since_last_update (number, optional): only cards untouched for N+ days.',
+                '  - days_since_last_update (number, optional): only cards updated within the last N days.',
                 '  - include_archived (boolean, optional): include archived cards.',
                 '  - number (number, optional): fetch a single card by its #N number.',
                 '  - page (number, optional, default 1).',
@@ -198,18 +215,19 @@ const registerCardsTools = server => {
         {
             title: 'Get a card',
             description: [
-                'Fetch one card by its ObjectId.',
+                'Fetch one card by its number, ObjectId or link.',
                 '',
                 'Args:',
-                '  - id (string, required): card ObjectId.',
-                '  - board (string, optional): board publicId — required for mirror cards to disambiguate.',
+                `  - id (string | number, required): ${CARD_REF_HELP}, or the card's link, which ends in /b/<board>/c/<number>.`,
+                '  - board (string, optional): board publicId — required for mirror cards to disambiguate. A link already names it.',
                 '  - response_format ("markdown" | "json").',
                 '',
                 'Examples:',
-                '  - "Show me card 6700aabbccddeeff00112233"',
+                '  - "Show me card 28407"',
+                '  - "Review this card: <a card link>"',
             ].join('\n'),
             inputSchema: {
-                id: objectIdField,
+                id: cardLocatorField,
                 board: boardPublicIdField.optional(),
                 response_format: responseFormatField,
             },
@@ -217,11 +235,9 @@ const registerCardsTools = server => {
         },
         async ({ id, board, response_format }) =>
             safeRun(async () => {
-                const data = await makeApiRequest(`/cards/${id}`, { query: { board } });
-                const text =
-                    response_format === ResponseFormat.JSON
-                        ? toJsonString(data)
-                        : `# ${data.title}\n- **id**: ${data._id}${data.description ? `\n- **description**: ${data.description}` : ''}`;
+                const card = resolveCardLocator(id);
+                const data = await makeApiRequest(`/cards/${card.ref}`, { query: { board: board || card.board } });
+                const text = response_format === ResponseFormat.JSON ? toJsonString(data) : renderCard(data);
                 return { content: [{ type: 'text', text }], structuredContent: data };
             })
     );
