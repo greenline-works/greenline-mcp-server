@@ -1,3 +1,5 @@
+const { version: SERVER_VERSION } = require('../package.json');
+
 const DEFAULT_BASE_URL = 'https://integrations.greenline.works/v1';
 
 // List tools that exceed this halve their results and return a `truncated` note,
@@ -8,7 +10,6 @@ const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 
 const SERVER_NAME = 'greenline-works-mcp-server';
-const SERVER_VERSION = '0.3.4';
 
 const REQUEST_TIMEOUT_MS = 30000;
 
