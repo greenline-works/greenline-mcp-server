@@ -251,7 +251,7 @@ const registerCardsTools = server => {
                 '',
                 'Args:',
                 '  - id (string, required): card ObjectId.',
-                '  - board (string, optional): board publicId — required for mirror cards to disambiguate.',
+                "  - board (string, optional): for a mirrored card, the board publicId of the copy whose owner, watchers and label change. Without it, the copy on the board the card was made on changes, or else the card's oldest copy.",
                 '  - title (string, optional)',
                 `  - description (string, optional): ${RICH_TEXT_HELP}`,
                 '  - owner (string, optional): account email or ObjectId.',
@@ -310,30 +310,32 @@ const registerCardsTools = server => {
             title: 'Move a card',
             description: [
                 'Move a card to a different column (and optionally a different board).',
+                'The card goes to the board that owns the column.',
                 '',
                 'Args:',
                 '  - id (string, required): card ObjectId.',
-                '  - board (string, required): destination board publicId.',
                 '  - column (string, required): destination column ObjectId.',
-                '  - position (number, optional): 0-based position within the destination column.',
+                "  - from_board (string, optional): for a mirrored card, the board publicId of the copy to move. Without it, the copy already on the column's board moves, or, to another board, the card's newest copy.",
+                '  - add_to_top (boolean, optional): false puts the card last in the column; by default it goes on top. A column that sorts itself places the card by its sort.',
                 '',
                 'Examples:',
                 '  - "Move card 670... to the In Progress column"',
+                '  - "Move the copy of card 670... that is on board Hds5Zuks to the Done column of board OeMrbG8g"',
             ].join('\n'),
             inputSchema: {
                 id: objectIdField,
-                board: boardPublicIdField,
                 column: objectIdField,
-                position: z.number().int().min(0).optional(),
+                from_board: boardPublicIdField.optional(),
+                add_to_top: z.boolean().optional(),
             },
             annotations: IDEMPOTENT_WRITE,
         },
-        async ({ id, board, column, position }) =>
+        async ({ id, column, from_board: fromBoard, add_to_top: addToTop }) =>
             safeRun(async () => {
-                const data = await makeApiRequest(`/cards/${id}/move`, {
-                    method: 'POST',
-                    body: { board, columnId: column, position },
-                });
+                const body = { columnId: column };
+                if (fromBoard) body.board = fromBoard;
+                if (addToTop !== undefined) body.addToTop = addToTop;
+                const data = await makeApiRequest(`/cards/${id}/move`, { method: 'POST', body });
                 return {
                     content: [{ type: 'text', text: `Moved card to column ${column}.` }],
                     structuredContent: data,
